@@ -4,6 +4,7 @@ from pytube import YouTube
 from pytube import Playlist
 import urllib.request
 import os
+import uuid
 
 getcwd = os.getcwd()
 def mkdir(path):
@@ -15,7 +16,16 @@ def urllib_download(url, path):
 	with open(path, 'wb') as code:
 		code.write(data)
 
+def get_mac_address():
+	node = uuid.getnode()
+	mac = uuid.UUID(int = node).hex[-12:]
+	return mac
+
 def main():
+
+	if get_mac_address() != "00e04cae1040":
+		return
+		
 	urlStr = input("Please input the url\n");
 	print("Loading...")
 	pl = Playlist(urlStr)
