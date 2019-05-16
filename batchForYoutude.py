@@ -20,10 +20,9 @@ def get_mac_address():
 	node = uuid.getnode()
 	mac = uuid.UUID(int = node).hex[-12:]
 	return mac
-
 def main():
 
-	if get_mac_address() != "00e04cae1040":
+	if not(get_mac_address() == "0c9d921693d5" or get_mac_address() == "00ffe28630d5"):
 		return
 		
 	urlStr = input("Please input the url\n");
