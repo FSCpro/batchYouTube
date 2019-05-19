@@ -8,7 +8,9 @@ import uuid
 
 getcwd = os.getcwd()
 def mkdir(path):
-	os.makedirs(path)
+	folder = os.path.exists(path)
+	if not folder:
+		os.makedirs(path)
 
 def urllib_download(url, path):
 	f = urllib.request.urlopen(url)
@@ -22,35 +24,71 @@ def get_mac_address():
 	return mac
 def main():
 
-	if not(get_mac_address() == "0c9d921693d5" or get_mac_address() == "00ffe28630d5"):
-		return
-		
-	urlStr = input("Please input the url\n");
+	# if not(get_mac_address() == "0c9d921693d5" or get_mac_address() == "00ffe28630d5"):
+	# 	return
+	videoPath = input("Please input file name\n")
+	urlStr = input("Please input the url\n")
 	print("Loading...")
-	pl = Playlist(urlStr)
-	playlist_url = pl.parse_links()
+	pl = Playlist("https://www.youtube.com/" + urlStr)
+	playlist_urls = pl.parse_all_links()
 	failed = []
 
 	print("-----------------------------------------")
 	print("Video downloads")
-	print(len(playlist_url))
+	print(len(playlist_urls))
 	print("-----------------------------------------")
 	print("Start download")
-	for i in range(len(playlist_url)):
-		URL = "https://www.youtube.com"+playlist_url[i]
+	for i in range(len(playlist_urls)):
+		print("")
+		print("")
+		print("-----------------------------------------")
+		playlist_url = playlist_urls[i].split()[0][:-1]
+		URL = "https://www.youtube.com"+playlist_url
 		try:
-			you = YouTube(URL)
+			you = YouTube(URL);
 			print(i)
 			print(you.title)
-			path = getcwd + "/video/" + you.title
+			path = getcwd + "/" + videoPath + "/" + you.title
 			mkdir(path)
-			url = "https://i.ytimg.com/vi/" + playlist_url[i].replace("/watch?v=","") + "/maxresdefault.jpg"
+			url = "https://i.ytimg.com/vi/" + playlist_url.replace("/watch?v=","") + "/maxresdefault.jpg"
 			print(path)
-			urllib_download(url,path + "/image.jpg")
 			you.streams.first().download(path)
+			urllib_download(url, path + "/image.jpg")
 
 		except:
-			failed.append(i)
+			failed.append(playlist_url)
+
+
+	print("")
+	print("Download complete, failed video link")
+	print(failed)
+
+	print("")
+	print("+++++++++++++++++++++++++++++++++++++++++++++++++++")
+	print("++++                                           ++++")
+	print("++++    Recursive download of failed video     ++++")
+	print("++++         Download hqdefault image          ++++")
+	print("++++                                           ++++")
+	print("+++++++++++++++++++++++++++++++++++++++++++++++++++")
+	print("")
+
+	for playlist_url in failed:
+		print("")
+		print("")
+		print("-----------------------------------------")
+		URL = "https://www.youtube.com"+playlist_url
+		try:
+			you = YouTube(URL);
+			print(you.title)
+			path = getcwd + "/" + videoPath + "/" + you.title
+			mkdir(path)
+			url = "https://i.ytimg.com/vi/" + playlist_url.replace("/watch?v=","") + "/hqdefault.jpg"
+			print(path)
+			urllib_download(url, path + "/image.jpg")
+			you.streams.first().download(path)
+			failed.remove(playlist_url)
+		except:
+			print("")
 
 	print("Download complete, failed video link")
 	print(failed)
