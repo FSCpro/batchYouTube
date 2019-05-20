@@ -2,7 +2,11 @@
 
 from pytube import YouTube
 from pytube import Playlist
+from pytube import request
 import urllib.request
+from collections import OrderedDict
+import re
+import json
 import os
 import uuid
 
@@ -22,15 +26,47 @@ def get_mac_address():
 	node = uuid.getnode()
 	mac = uuid.UUID(int = node).hex[-12:]
 	return mac
+
+
+def parse_all_links(Playlist):
+
+	url = Playlist.construct_playlist_url()
+	req = request.get(url)
+
+	# split the page source by line and process each line
+	content = [x for x in req.split('\n') if 'yt-uix-sessionlink yt-uix-tile-link' in x]
+	link_list = [x.split('href="', 1)[1].split('&', 1)[0] for x in content]
+
+	# The above only returns 100 or fewer links
+	# Simulating a browser request for the load more link
+	load_more_url = Playlist._load_more_url(req)
+	while len(load_more_url):  # there is an url found
+		req = request.get(load_more_url)
+		load_more = json.loads(req)
+		videos = re.findall(
+			r'href=\"(/watch\?v=[\w-]*)',
+			load_more['content_html'],
+		)
+		# remove duplicates
+		link_list.extend(list(OrderedDict.fromkeys(videos)))
+		load_more_url = Playlist._load_more_url(
+			load_more['load_more_widget_html'],
+		)
+
+	return link_list
+
+
 def main():
 
-	# if not(get_mac_address() == "0c9d921693d5" or get_mac_address() == "00ffe28630d5"):
-	# 	return
+	computer = ["00e05b680642","00e02c680a18","00ff44ba15eb","00e05b68070b","bc5ff4bbe314"];
+	#if not(get_mac_address() in computer):
+	#	return
+
 	videoPath = input("Please input file name\n")
 	urlStr = input("Please input the url\n")
 	print("Loading...")
 	pl = Playlist("https://www.youtube.com/" + urlStr)
-	playlist_urls = pl.parse_all_links()
+	playlist_urls = parse_all_links(pl)
 	failed = []
 
 	print("-----------------------------------------")
@@ -42,7 +78,10 @@ def main():
 		print("")
 		print("")
 		print("-----------------------------------------")
-		playlist_url = playlist_urls[i].split()[0][:-1]
+		if "\"" in playlist_urls[i].split()[0]:
+			playlist_url = playlist_urls[i].split()[0][:-1]
+		else:
+			playlist_url = playlist_urls[i].split()[0]
 		URL = "https://www.youtube.com"+playlist_url
 		try:
 			you = YouTube(URL);
@@ -96,4 +135,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+	main()
