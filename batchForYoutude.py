@@ -58,10 +58,6 @@ def parse_all_links(Playlist):
 
 def main():
 
-	computer = ["4ccc6ab54d79"]
-	if not(get_mac_address() in computer):
-		return
-
 	videoPath = input("Please input file name\n")
 	urlStr = input("Please input the url\n")
 	print("Loading...")
